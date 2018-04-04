@@ -1,0 +1,137 @@
+
+
+
+<!doctype html>
+<html>
+<head>
+<style>
+body {background-color: black;}                            
+#myimage {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 100%;
+    max-height: 100%;
+    margin: auto;
+    overflow: auto;
+}
+</style>
+</head>
+<body>
+<canvas id='myCanvas' ></canvas>
+<script>
+var interval = __INTERVAL__;
+var currentCount = interval-1;
+var timer = setInterval(loadImage,1000);
+var boolReady = true;
+var lastCheck = 0;
+
+var canvas = document.getElementById('myCanvas');
+var context = canvas.getContext('2d');
+
+
+canvas.addEventListener('contextmenu', function (evt) {
+    evt.preventDefault();
+}, true);
+
+
+canvas.addEventListener('mousemove', function(evt) {
+    var mousePos = getMousePos(canvas, evt);
+    var xpos = ((mousePos.x + 1) / canvas.width).toFixed(3);
+    var ypos = ((mousePos.y + 1) / canvas.height).toFixed(3);
+    //disabled...too slow
+  //sendMouseAction("move", xpos, ypos);
+}, false);
+
+canvas.addEventListener('mouseup', function(evt) {
+  var mousePos = getMousePos(canvas, evt);
+  var xpos = ((mousePos.x+1)/canvas.width).toFixed(3);
+  var ypos = ((mousePos.y + 1) / canvas.height).toFixed(3);
+
+  if (evt.button == 2) {
+      sendMouseAction("rightup", xpos, ypos);
+  } else {
+      sendMouseAction("leftup", xpos, ypos);
+  }
+
+}, false);
+
+canvas.addEventListener('mousedown', function(evt) {
+  var mousePos = getMousePos(canvas, evt);
+  var xpos = ((mousePos.x+1)/canvas.width).toFixed(3);
+  var ypos = ((mousePos.y + 1) / canvas.height).toFixed(3);
+
+  if (evt.button == 2) {
+      sendMouseAction("rightdown", xpos, ypos);
+  } else {
+      sendMouseAction("leftdown", xpos, ypos);
+  }
+  
+}, false);
+
+loadImage();
+
+function sendMouseAction(action, x, y) {
+    console.log("send mouse " + action + " command at " + x + "x" + y);
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            // Action to be performed when the document is read;
+            console.log(xhttp.responseText);
+        }
+    };
+    xhttp.open("GET", "/mouse?action="+action+"&x=" + x + "&y=" + y + "&random=" + new Date().getTime());
+    xhttp.send();
+}
+
+
+function getMousePos(canvas, evt) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: evt.clientX - rect.left,
+    y: evt.clientY - rect.top
+  };
+}
+
+function loadImage() {
+    var now = new Date().getTime();                                
+    if (!boolReady) {
+        //has it been too long?
+        var diff = now - lastCheck;
+        if (diff >= 10000) {
+            currentCount = interval;
+        } else {
+            return;
+        }
+    }
+
+    currentCount +=1;
+    document.title = interval - currentCount;
+    if (currentCount >= interval) {
+        boolReady = false;
+        document.title = 'Loading...';
+        //clearInterval(timer);                                    
+        var img=new Image();
+        img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            console.log(img.width+'x'+img.height);
+            context.drawImage(img,0,0);
+
+            //timer = setInterval(loadImage,1000);
+            boolReady = true;
+        };
+        img.src = 'capture.jpg?random='+new Date().getTime();
+
+        currentCount = 0;                               
+        lastCheck = now;
+    }
+    
+}
+
+
+</script>
+</body>
+</html>
